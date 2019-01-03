@@ -44,11 +44,11 @@ void ASCIIToHexStr(unsigned char *pbDest, unsigned char *pbSrc, int nLen)
 }
 int main(int argc, char const *argv[])
 {
-    int a = 0x30;
-    char b = '0';
-    char ascii[] = "\r\n,0,ERROR\r\n"; //ERROR->4552524F52
-    char hexStr[] = "";
-    short RecBuff[] = {0x45, 0x52, 0x52, 0x4F, 0x52};
+    // int a = 0x30;
+    // char b = '0';
+    unsigned char ascii[] = "\r\n,0,ERROR\r\n"; //ERROR->4552524F52
+    unsigned char hexStr[] = "";
+    char RecBuff[] = {0x45, 0x52, 0x52, 0x4F, 0x52};
     // char RecBuff[] = {0x45, 0x52, 0x52, 0x4F, 0x52};
     ASCIIToHexStr(hexStr, ascii, strlen(ascii));
     // printf("%s", hexStr);

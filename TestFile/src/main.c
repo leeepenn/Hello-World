@@ -4,18 +4,18 @@
 #include <time.h>
 
 #define lenthRec 128
-void delay_ms(int ms) 
-{ 
-	// Converting time into milli_seconds 
-	int milli_seconds = ms; 
+void delay_ms(int ms)
+{
+	// Converting time into milli_seconds
+	int milli_seconds = ms;
 
-	// Stroing start time 
-	clock_t start_time = clock(); 
+	// Stroing start time
+	clock_t start_time = clock();
 
-	// looping till required time is not acheived 
-	while (clock() < start_time + milli_seconds) 
-		; 
-} 
+	// looping till required time is not acheived
+	while (clock() < start_time + milli_seconds)
+		;
+}
 
 void ASCIIToHexStr(unsigned char *pbDest, unsigned char *pbSrc, int nLen)
 {
@@ -58,26 +58,80 @@ unsigned int CRC16_Checkout(unsigned char *puchMsg, unsigned int usDataLen)
 	return crc_reg;
 }
 
-int includeError(char *theArray)
-{
-	return 0;
-}
 /*
 	judge the reply from NB module
 	judge by keyword "ERROR" of "ok"
 */
 int checkConnect(char *recBuff)
 {
-	if (includeError(recBuff) || strlen(recBuff) == 0)
+	char find[] = "ERROR";
+	if (strstr(recBuff, find) != NULL || strlen(recBuff) == 0)
 	{
-		return 0;
+		return 1;
 	}
 
 	else
 	{
-		return 1;
+		return 0;
 	}
 }
+
+/* 
+	function to set value,judged by the label, such as "QN" "a05002-Rtd",etc.
+ * @param char * dataSeg The original string
+ * @param char * label The data's label to search for
+ * @param char * value The replace string value
+ */
+void setValue(char *dataSeg, char *label, char *value)
+{
+	//the lenth of real data segment,do not count label and symbols "=", ";" etc.
+	unsigned int len = 0;
+	//offset equals the lenth of label string appending symbol "="
+	unsigned int offset = 0;
+	//a buffer variable
+	char buffer[256] = "";
+	//store the pointer returned from strstr
+	char *ch = "";
+
+	//get the position of the string to replace
+
+	if (!(ch = strstr(dataSeg, label)))
+	{
+		return;
+	}
+
+	if (strcmp(label, "QN") == 0)
+	{
+		offset = 3;
+		len = 17;
+	}
+	else if (strcmp(label, "a05002-Rtd") == 0)
+	{
+		offset = 11;
+		len = 4;
+	}
+	else if (strcmp(label, "DataTime") == 0)
+	{
+		offset = 9;
+		len = 14;
+	}
+	else if (strcmp(label, "a05002-SampleTime") == 0)
+	{
+		offset = 18;
+		len = 14;
+	}
+	ch += offset;
+	//copy all the content to buffer before the
+	strncpy(buffer, dataSeg, ch - dataSeg);
+	//prepare the buffer for appending by adding a null to the end
+	buffer[ch - dataSeg] = 0;
+	//append the rep string to the end of buffer useing sprinf fuction
+	sprintf(buffer + (ch - dataSeg), "%s%s", value, ch + len);
+	//empty the original string to save the new data
+	dataSeg[0] = 0;
+	strcpy(dataSeg, buffer);
+}
+
 int NB_CONNECTED_FLAG = 0;
 char dataTemp[200] = "##";
 int packageSize = 0;
@@ -87,10 +141,32 @@ char recBuff1[lenthRec] = "0,ok";
 char recBuff2[lenthRec] = "0,ok";
 char recBuff3[lenthRec] = "0,ok";
 char recBuff4[lenthRec] = "0,ERRO";
-unsigned char dataSegment[] = "QN=20181214102157223;ST=22;CN=2011;PW=123456;MN=010000A8900016F000169DC0;Flag=5;CP=&&DataTime=20180531102157;a05002-Rtd=7.11,a05002-Flag=N;a05002-SampleTime=20180531104100&&"; //
+char dataSegment[] = "QN=20181214102157223;ST=22;CN=2011;PW=123456;MN=010000A8900016F000169DC0;Flag=5;CP=&&DataTime=20180531102157;a05002-Rtd=7.11,a05002-Flag=N;a05002-SampleTime=20180531104100&&"; //
+
+// typedef struct 
+// {
+// 	 char *qn;
+// 	 char *gasValue;
+// 	 char *dataTime;
+// 	 char *sampleTime;
+// }dataLabel;
 
 int main()
 {
+	char *label_qn = "QN";
+	char *label_gasValue = "a05002-Rtd";
+	char *label_dataTime= "DataTime";
+	char *label_sampleTime = "a05002-SampleTime";
+	char newQnCode[] = "20191114102157223";
+	char newGasValue[] = "9.99";
+	char newDataTime[] = "20110531102154";
+	char newSampleTime[] = "20140831104109";
+	printf("the old dataSegment is: %s\n", dataSegment);
+	setValue(dataSegment, label_qn, newQnCode);
+	setValue(dataSegment, label_gasValue, newGasValue);
+	setValue(dataSegment, label_dataTime, newDataTime);
+	setValue(dataSegment, label_sampleTime, newSampleTime);
+	printf("the new dataSegment is: %s\n", dataSegment);
 	unsigned char dataToSend[400] = {0};
 	unsigned int len = strlen(dataSegment);		//temporary save the lenth of dataSegment,later convert to char array
 	crc_reg = CRC16_Checkout(dataSegment, len); //save the result of crcCheck,later convert to char array
@@ -135,12 +211,6 @@ int main()
 	// 	delay_ms(5000);
 	// 	NB_CONNECTED_FLAG = 1;
 	// }
-	printf("AT+NSOSD=0,%d,%s%s\r\n", packageSize, dataToSend, "0D0A");
+	// printf("AT+NSOSD=0,%d,%s%s\r\n", packageSize, dataToSend, "0D0A");
 	return 0;
-}
-void setTime(char *dataSeg, char *time)
-{
-}
-void setGasValue(char *dataSeg, char *value)
-{
 }

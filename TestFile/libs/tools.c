@@ -65,13 +65,14 @@ int includeError(char *theArray)
 */
 int checkConnect(char *recBuff)
 {
-	if (includeError(recBuff) || strlen(recBuff) == 0)
+	char find[] = "ERROR";
+	if (strstr(recBuff, find) != NULL || strlen(recBuff) == 0)
 	{
-		return 0;
+		return 1;
 	}
 
 	else
 	{
-		return 1;
+		return 0;
 	}
 }
