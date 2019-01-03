@@ -4,7 +4,6 @@
 int checkReply(char *recBuff)
 {
     char find[] = "ERROR";
-    printf("%s", recBuff);
     if (strstr(recBuff, find) != NULL || strlen(recBuff) == 0)
     {
         return 1;
